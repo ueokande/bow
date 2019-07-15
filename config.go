@@ -4,7 +4,6 @@ type Config struct {
 	ContextName string
 	Namespace   string
 	KubeConfig  string
-	Query       Query
+	Query       string
+	Command     []string
 }
-
-type Query []string

@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -34,7 +33,7 @@ func main() {
 	}
 
 	cmd := &cobra.Command{}
-	cmd.Use = "bow pod-query"
+	cmd.Use = "bow POD_SELECTOR"
 	cmd.Short = "Run commands on multiple pods and containers from Kubernetes"
 
 	cmd.Flags().StringVarP(&params.container, "container", "c", params.container, "Container name when multiple containers in pod")
@@ -43,26 +42,22 @@ func main() {
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		narg := len(args)
-		if narg < 1 {
+		if narg < 2 {
 			return cmd.Help()
 		}
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		query, err := parseQuery(args[0])
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(2)
-		}
 		config := Config{
 			ContextName: params.container,
 			Namespace:   params.namespace,
 			KubeConfig:  params.kubeconfig,
-			Query:       query,
+			Query:       args[0],
+			Command:     args[1:],
 		}
 
-		err = RunBow(ctx, &config)
+		err := RunBow(ctx, &config)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -74,8 +69,4 @@ func main() {
 	if err := cmd.Execute(); err != nil {
 		log.Fatal(err)
 	}
-}
-
-func parseQuery(queryString string) (Query, error) {
-	return strings.Split(queryString, ","), nil
 }
