@@ -1,9 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
+	"io"
 	"os"
+	"sync"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -31,14 +34,14 @@ func RunBow(ctx context.Context, config *Config) error {
 		return err
 	}
 
+	loggerFactory := LoggerFactory{}
+
+	var wg sync.WaitGroup
 	for _, pod := range pods.Items {
 		if pod.Status.Phase == corev1.PodSucceeded || pod.Status.Phase == corev1.PodFailed {
-			fmt.Fprintf(os.Stderr, "Pod %s is not ready: %s\n", pod.Name, pod.Status.Phase)
 			continue
 		}
-
 		c := pod.Spec.Containers[0].Name
-		fmt.Fprintf(os.Stderr, "==== %s/%s ====\n", pod.Name, c)
 		req := rest.Post().
 			Resource("pods").
 			Name(pod.Name).
@@ -58,16 +61,34 @@ func RunBow(ctx context.Context, config *Config) error {
 			fmt.Fprintf(os.Stderr, "Failed to create SPDY executor: %v\n", err)
 			continue
 		}
-		err = exec.Stream(remotecommand.StreamOptions{
-			Stdin:  nil,
-			Stdout: os.Stdout,
-			Stderr: os.Stdin,
-			Tty:    false,
-		})
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to exec command: %v\n", err)
-			continue
-		}
+
+		wg.Add(1)
+		r, w := io.Pipe()
+		go func() {
+			err = exec.Stream(remotecommand.StreamOptions{
+				Stdin:  nil,
+				Stdout: w,
+				Stderr: w,
+				Tty:    false,
+			})
+			if err != nil {
+				w.CloseWithError(err)
+			}
+			w.Close()
+		}()
+		go func() {
+			defer wg.Done()
+
+			logger := loggerFactory.NewLogger(pod.Name)
+			s := bufio.NewScanner(r)
+			for s.Scan() {
+				logger.Println(s.Text())
+			}
+			if err := s.Err(); err != nil {
+				fmt.Println(os.Stderr, "Scan exit with", err)
+			}
+		}()
 	}
+	wg.Wait()
 	return nil
 }
