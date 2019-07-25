@@ -29,15 +29,16 @@ func RunBow(ctx context.Context, config *Config) error {
 		return err
 	}
 
-	pods, err := clientset.CoreV1().Pods(config.Namespace).List(metav1.ListOptions{})
+	resp, err := clientset.CoreV1().Pods(config.Namespace).List(metav1.ListOptions{})
 	if err != nil {
 		return err
 	}
+	pods := filtePods(resp.Items, config.Query)
 
 	loggerFactory := LoggerFactory{}
 
 	var wg sync.WaitGroup
-	for _, pod := range pods.Items {
+	for _, pod := range pods {
 		if pod.Status.Phase == corev1.PodSucceeded || pod.Status.Phase == corev1.PodFailed {
 			continue
 		}
@@ -91,4 +92,17 @@ func RunBow(ctx context.Context, config *Config) error {
 	}
 	wg.Wait()
 	return nil
+}
+
+func filtePods(pods []corev1.Pod, query string) []corev1.Pod {
+	var filtered []corev1.Pod
+	for _, p := range pods {
+		for _, v := range p.Labels {
+			if v == query {
+				filtered = append(filtered, p)
+				break
+			}
+		}
+	}
+	return filtered
 }
