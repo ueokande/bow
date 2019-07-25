@@ -3,9 +3,11 @@ module github.com/ueokande/bow
 go 1.12
 
 require (
+	github.com/fatih/color v1.7.0
 	github.com/google/gofuzz v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.6 // indirect
 	github.com/kr/pretty v0.1.0 // indirect
+	github.com/mattn/go-colorable v0.1.2 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/spf13/cobra v0.0.5
 	golang.org/x/net v0.0.0-20190613194153-d28f0bde5980 // indirect
