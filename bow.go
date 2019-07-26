@@ -36,7 +36,9 @@ func RunBow(ctx context.Context, config *Config) error {
 	}
 	pods := filtePods(resp.Items, config.Query)
 
-	loggerFactory := LoggerFactory{}
+	loggerFactory := LoggerFactory{
+		nohosts: config.NoHosts,
+	}
 
 	var wg sync.WaitGroup
 	for _, pod := range pods {

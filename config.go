@@ -6,4 +6,5 @@ type Config struct {
 	KubeConfig  string
 	Query       string
 	Command     []string
+	NoHosts     bool
 }

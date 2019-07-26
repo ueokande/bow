@@ -7,7 +7,8 @@ import (
 )
 
 type Logger struct {
-	host string
+	host    string
+	nohosts bool
 
 	msgw  *color.Color
 	hostw *color.Color
@@ -18,11 +19,17 @@ func (l *Logger) Println(str string) {
 	l.m.Lock()
 	defer l.m.Unlock()
 
-	l.hostw.Add(color.Bold).Printf(l.host + "|")
-	l.msgw.Println("", str)
+	if l.nohosts {
+		l.msgw.Println(str)
+	} else {
+		l.hostw.Add(color.Bold).Printf(l.host)
+		l.msgw.Println("|", str)
+	}
 }
 
 type LoggerFactory struct {
+	nohosts bool
+
 	color color.Attribute
 	m     sync.Mutex
 }
@@ -30,10 +37,11 @@ type LoggerFactory struct {
 func (f *LoggerFactory) NewLogger(host string) *Logger {
 	f.color = f.nextColor()
 	return &Logger{
-		host:  host,
-		hostw: color.New(f.color, color.Bold),
-		msgw:  color.New(f.color),
-		m:     &f.m,
+		host:    host,
+		nohosts: f.nohosts,
+		hostw:   color.New(f.color, color.Bold),
+		msgw:    color.New(f.color),
+		m:       &f.m,
 	}
 }
 

@@ -24,6 +24,7 @@ type Params struct {
 	container  string
 	namespace  string
 	kubeconfig string
+	nohosts    bool
 }
 
 func main() {
@@ -39,6 +40,7 @@ func main() {
 	cmd.Flags().StringVarP(&params.container, "container", "c", params.container, "Container name when multiple containers in pod")
 	cmd.Flags().StringVarP(&params.namespace, "namespace", "n", params.namespace, "Kubernetes namespace to use. Default to namespace configured in Kubernetes context")
 	cmd.Flags().StringVarP(&params.kubeconfig, "kubeconfig", "", params.kubeconfig, " Path to kubeconfig file to use")
+	cmd.Flags().BoolVarP(&params.nohosts, "no-hosts", "", params.nohosts, "Do not print hosts")
 
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		narg := len(args)
@@ -55,6 +57,7 @@ func main() {
 			KubeConfig:  params.kubeconfig,
 			Query:       args[0],
 			Command:     args[1:],
+			NoHosts:     params.nohosts,
 		}
 
 		err := RunBow(ctx, &config)
