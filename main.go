@@ -34,7 +34,7 @@ func main() {
 	}
 
 	cmd := &cobra.Command{}
-	cmd.Use = "bow POD_SELECTOR"
+	cmd.Use = "bow [OPTIONS] POD_SELECTOR -- COMMAND ARG..."
 	cmd.Short = "Run commands on multiple pods and containers from Kubernetes"
 
 	cmd.Flags().StringVarP(&params.container, "container", "c", params.container, "Container name when multiple containers in pod")
