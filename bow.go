@@ -42,6 +42,7 @@ func RunBow(ctx context.Context, config *Config) error {
 
 	var wg sync.WaitGroup
 	for _, pod := range pods {
+		pod := pod
 		if pod.Status.Phase == corev1.PodSucceeded || pod.Status.Phase == corev1.PodFailed {
 			continue
 		}
@@ -66,6 +67,7 @@ func RunBow(ctx context.Context, config *Config) error {
 			continue
 		}
 
+		logger := loggerFactory.NewLogger(pod.Name)
 		wg.Add(1)
 		r, w := io.Pipe()
 		go func() {
@@ -82,8 +84,6 @@ func RunBow(ctx context.Context, config *Config) error {
 		}()
 		go func() {
 			defer wg.Done()
-
-			logger := loggerFactory.NewLogger(pod.Name)
 			s := bufio.NewScanner(r)
 			for s.Scan() {
 				logger.Println(s.Text())
