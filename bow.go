@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"sync"
 
 	corev1 "k8s.io/api/core/v1"
@@ -95,13 +96,22 @@ func RunBow(ctx context.Context, config *Config) error {
 }
 
 func filtePods(pods []corev1.Pod, query string) []corev1.Pod {
-	var filtered []corev1.Pod
-	for _, p := range pods {
+	match := func(p corev1.Pod) bool {
+		if strings.Contains(p.Name, query) {
+			return true
+		}
 		for _, v := range p.Labels {
 			if v == query {
-				filtered = append(filtered, p)
-				break
+				return true
 			}
+		}
+		return false
+	}
+
+	var filtered []corev1.Pod
+	for _, p := range pods {
+		if match(p) {
+			filtered = append(filtered, p)
 		}
 	}
 	return filtered
