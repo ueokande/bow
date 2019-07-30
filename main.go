@@ -3,24 +3,16 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
+	"github.com/ueokande/bow/pkg/bow"
 )
 
-var homedir string
-
 func init() {
-	if h := os.Getenv("HOME"); h != "" {
-		homedir = h
-	} else {
-		homedir = os.Getenv("USERPROFILE") // windows
-	}
 }
 
-type Params struct {
+type params struct {
 	container  string
 	namespace  string
 	kubeconfig string
@@ -28,9 +20,8 @@ type Params struct {
 }
 
 func main() {
-	params := Params{
-		namespace:  "default",
-		kubeconfig: filepath.Join(homedir, ".kube", "config"),
+	params := params{
+		namespace: "default",
 	}
 
 	cmd := &cobra.Command{}
@@ -51,7 +42,7 @@ func main() {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		config := Config{
+		config := bow.Config{
 			ContextName: params.container,
 			Namespace:   params.namespace,
 			KubeConfig:  params.kubeconfig,
@@ -60,7 +51,7 @@ func main() {
 			NoHosts:     params.nohosts,
 		}
 
-		err := RunBow(ctx, &config)
+		err := bow.RunBow(ctx, &config)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -70,6 +61,7 @@ func main() {
 	}
 
 	if err := cmd.Execute(); err != nil {
-		log.Fatal(err)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 }

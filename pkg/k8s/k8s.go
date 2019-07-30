@@ -1,25 +1,15 @@
-package main
+package k8s
 
 import (
 	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-var Scheme = func() *runtime.Scheme {
-	var scheme = runtime.NewScheme()
-	utilruntime.Must(corev1.AddToScheme(scheme))
-	return scheme
-}()
-
-var ParameterCodec = runtime.NewParameterCodec(Scheme)
-
+// NewRestConfig returns new rest.Config from kubeconfig path
 func NewRestConfig(kubeconfig string) (*rest.Config, error) {
 	rules := clientcmd.NewDefaultClientConfigLoadingRules()
 	if len(kubeconfig) > 0 {
@@ -51,6 +41,7 @@ func NewRestConfig(kubeconfig string) (*rest.Config, error) {
 	return cconfig, nil
 }
 
+// NewClientset returns a new kubernetes.Clientset from the reset.Config
 func NewClientset(config *rest.Config) (*kubernetes.Clientset, error) {
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {

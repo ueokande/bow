@@ -1,4 +1,4 @@
-package main
+package log
 
 import (
 	"sync"
@@ -6,27 +6,7 @@ import (
 	"github.com/fatih/color"
 )
 
-type Logger struct {
-	host    string
-	nohosts bool
-
-	msgw  *color.Color
-	hostw *color.Color
-	m     *sync.Mutex
-}
-
-func (l *Logger) Println(str string) {
-	l.m.Lock()
-	defer l.m.Unlock()
-
-	if l.nohosts {
-		l.msgw.Println(str)
-	} else {
-		l.hostw.Add(color.Bold).Printf(l.host)
-		l.msgw.Println("|", str)
-	}
-}
-
+// LoggerFactory is a factory for Logger
 type LoggerFactory struct {
 	nohosts bool
 
@@ -34,6 +14,14 @@ type LoggerFactory struct {
 	m     sync.Mutex
 }
 
+// NewLoggerFactory creates new LoggerFactory
+func NewLoggerFactory(nohosts bool) *LoggerFactory {
+	return &LoggerFactory{
+		nohosts: nohosts,
+	}
+}
+
+// NewLogger creates a logger with a new color for the host
 func (f *LoggerFactory) NewLogger(host string) *Logger {
 	f.color = f.nextColor()
 	return &Logger{

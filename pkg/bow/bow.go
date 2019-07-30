@@ -1,4 +1,4 @@
-package main
+package bow
 
 import (
 	"bufio"
@@ -9,18 +9,21 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/ueokande/bow/pkg/k8s"
+	"github.com/ueokande/bow/pkg/log"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/remotecommand"
 )
 
+// RunBow runs bow application with the config
 func RunBow(ctx context.Context, config *Config) error {
-	restconfig, err := NewRestConfig(config.KubeConfig)
+	restconfig, err := k8s.NewRestConfig(config.KubeConfig)
 	if err != nil {
 		return err
 	}
-	clientset, err := NewClientset(restconfig)
+	clientset, err := k8s.NewClientset(restconfig)
 	if err != nil {
 		return err
 	}
@@ -34,11 +37,9 @@ func RunBow(ctx context.Context, config *Config) error {
 	if err != nil {
 		return err
 	}
-	pods := filtePods(resp.Items, config.Query)
+	pods := filterPods(resp.Items, config.Query)
 
-	loggerFactory := LoggerFactory{
-		nohosts: config.NoHosts,
-	}
+	loggerFactory := log.NewLoggerFactory(config.NoHosts)
 
 	var wg sync.WaitGroup
 	for _, pod := range pods {
@@ -59,7 +60,7 @@ func RunBow(ctx context.Context, config *Config) error {
 			Stdout:    true,
 			Stderr:    true,
 			TTY:       false,
-		}, ParameterCodec)
+		}, k8s.ParameterCodec)
 
 		exec, err := remotecommand.NewSPDYExecutor(restconfig, "POST", req.URL())
 		if err != nil {
@@ -97,7 +98,7 @@ func RunBow(ctx context.Context, config *Config) error {
 	return nil
 }
 
-func filtePods(pods []corev1.Pod, query string) []corev1.Pod {
+func filterPods(pods []corev1.Pod, query string) []corev1.Pod {
 	match := func(p corev1.Pod) bool {
 		if strings.Contains(p.Name, query) {
 			return true

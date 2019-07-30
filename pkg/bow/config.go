@@ -1,5 +1,6 @@
-package main
+package bow
 
+// Config is a bow config
 type Config struct {
 	ContextName string
 	Namespace   string
