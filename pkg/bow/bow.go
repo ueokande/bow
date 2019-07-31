@@ -90,7 +90,7 @@ func RunBow(ctx context.Context, config *Config) error {
 				logger.Println(s.Text())
 			}
 			if err := s.Err(); err != nil {
-				fmt.Println(os.Stderr, "Scan exit with", err)
+				fmt.Fprintln(os.Stderr, "Scan exit with", err)
 			}
 		}()
 	}
