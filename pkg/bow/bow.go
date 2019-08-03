@@ -47,52 +47,57 @@ func RunBow(ctx context.Context, config *Config) error {
 		if pod.Status.Phase == corev1.PodSucceeded || pod.Status.Phase == corev1.PodFailed {
 			continue
 		}
-		c := pod.Spec.Containers[0].Name
-		req := rest.Post().
-			Resource("pods").
-			Name(pod.Name).
-			Namespace(pod.Namespace).
-			SubResource("exec")
-		req.VersionedParams(&corev1.PodExecOptions{
-			Container: c,
-			Command:   config.Command,
-			Stdin:     false,
-			Stdout:    true,
-			Stderr:    true,
-			TTY:       false,
-		}, k8s.ParameterCodec)
+		for _, c := range pod.Spec.Containers {
+			c := c
+			if len(config.Container) > 0 && c.Name != config.Container {
+				continue
+			}
+			req := rest.Post().
+				Resource("pods").
+				Name(pod.Name).
+				Namespace(pod.Namespace).
+				SubResource("exec")
+			req.VersionedParams(&corev1.PodExecOptions{
+				Container: c.Name,
+				Command:   config.Command,
+				Stdin:     false,
+				Stdout:    true,
+				Stderr:    true,
+				TTY:       false,
+			}, k8s.ParameterCodec)
 
-		exec, err := remotecommand.NewSPDYExecutor(restconfig, "POST", req.URL())
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to create SPDY executor: %v\n", err)
-			continue
-		}
-
-		logger := loggerFactory.NewLogger(pod.Name, pod.Spec.Containers[0].Name)
-		wg.Add(1)
-		r, w := io.Pipe()
-		go func() {
-			err = exec.Stream(remotecommand.StreamOptions{
-				Stdin:  nil,
-				Stdout: w,
-				Stderr: w,
-				Tty:    false,
-			})
+			exec, err := remotecommand.NewSPDYExecutor(restconfig, "POST", req.URL())
 			if err != nil {
-				w.CloseWithError(err)
+				fmt.Fprintf(os.Stderr, "Failed to create SPDY executor: %v\n", err)
+				continue
 			}
-			w.Close()
-		}()
-		go func() {
-			defer wg.Done()
-			s := bufio.NewScanner(r)
-			for s.Scan() {
-				logger.Println(s.Text())
-			}
-			if err := s.Err(); err != nil {
-				fmt.Fprintln(os.Stderr, "Scan exit with", err)
-			}
-		}()
+
+			logger := loggerFactory.NewLogger(pod.Name, c.Name)
+			wg.Add(1)
+			r, w := io.Pipe()
+			go func() {
+				err = exec.Stream(remotecommand.StreamOptions{
+					Stdin:  nil,
+					Stdout: w,
+					Stderr: w,
+					Tty:    false,
+				})
+				if err != nil {
+					w.CloseWithError(err)
+				}
+				w.Close()
+			}()
+			go func() {
+				defer wg.Done()
+				s := bufio.NewScanner(r)
+				for s.Scan() {
+					logger.Println(s.Text())
+				}
+				if err := s.Err(); err != nil {
+					fmt.Fprintln(os.Stderr, "Scan exit with", err)
+				}
+			}()
+		}
 	}
 	wg.Wait()
 	return nil

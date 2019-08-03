@@ -43,12 +43,12 @@ func main() {
 		defer cancel()
 
 		config := bow.Config{
-			ContextName: params.container,
-			Namespace:   params.namespace,
-			KubeConfig:  params.kubeconfig,
-			Query:       args[0],
-			Command:     args[1:],
-			NoHosts:     params.nohosts,
+			Namespace:  params.namespace,
+			KubeConfig: params.kubeconfig,
+			Query:      args[0],
+			Container:  params.container,
+			Command:    args[1:],
+			NoHosts:    params.nohosts,
 		}
 
 		err := bow.RunBow(ctx, &config)
