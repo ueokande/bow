@@ -83,18 +83,17 @@ func RunBow(ctx context.Context, config *Config) error {
 					Tty:    false,
 				})
 				if err != nil {
+					fmt.Fprintln(w, err)
 					w.CloseWithError(err)
+				} else {
+					w.Close()
 				}
-				w.Close()
 			}()
 			go func() {
 				defer wg.Done()
 				s := bufio.NewScanner(r)
 				for s.Scan() {
 					logger.Println(s.Text())
-				}
-				if err := s.Err(); err != nil {
-					fmt.Fprintln(os.Stderr, "Scan exit with", err)
 				}
 			}()
 		}
