@@ -68,7 +68,7 @@ func RunBow(ctx context.Context, config *Config) error {
 			continue
 		}
 
-		logger := loggerFactory.NewLogger(pod.Name)
+		logger := loggerFactory.NewLogger(pod.Name, pod.Spec.Containers[0].Name)
 		wg.Add(1)
 		r, w := io.Pipe()
 		go func() {

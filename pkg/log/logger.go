@@ -6,17 +6,18 @@ import (
 	"github.com/fatih/color"
 )
 
-// Logger is a color logger with the host name
+// Logger is a color logger with the pod and container name
 type Logger struct {
-	host    string
-	nohosts bool
+	pod       string
+	container string
+	nohosts   bool
 
 	msgw  *color.Color
 	hostw *color.Color
 	m     *sync.Mutex
 }
 
-// Println prints the str as a single line with the host name
+// Println prints the str as a single line with the pod and container name
 func (l *Logger) Println(str string) {
 	l.m.Lock()
 	defer l.m.Unlock()
@@ -24,7 +25,7 @@ func (l *Logger) Println(str string) {
 	if l.nohosts {
 		l.msgw.Println(str)
 	} else {
-		l.hostw.Add(color.Bold).Printf(l.host)
+		l.hostw.Add(color.Bold).Printf("%s %s", l.pod, l.container)
 		l.msgw.Println("|", str)
 	}
 }

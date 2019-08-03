@@ -21,15 +21,16 @@ func NewLoggerFactory(nohosts bool) *LoggerFactory {
 	}
 }
 
-// NewLogger creates a logger with a new color for the host
-func (f *LoggerFactory) NewLogger(host string) *Logger {
+// NewLogger creates a logger with a new color for the container of the pod
+func (f *LoggerFactory) NewLogger(pod, container string) *Logger {
 	f.color = f.nextColor()
 	return &Logger{
-		host:    host,
-		nohosts: f.nohosts,
-		hostw:   color.New(f.color, color.Bold),
-		msgw:    color.New(f.color),
-		m:       &f.m,
+		pod:       pod,
+		container: container,
+		nohosts:   f.nohosts,
+		hostw:     color.New(f.color, color.Bold),
+		msgw:      color.New(f.color),
+		m:         &f.m,
 	}
 }
 
