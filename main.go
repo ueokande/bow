@@ -25,8 +25,8 @@ func main() {
 	}
 
 	cmd := &cobra.Command{}
-	cmd.Use = "bow [OPTIONS] POD_SELECTOR -- COMMAND ARG..."
-	cmd.Short = "Run commands on multiple pods and containers from Kubernetes"
+	cmd.Use = "bow [OPTIONS] POD_SELECTOR -- COMMAND ARGS..."
+	cmd.Short = "Exec a command on multiple pods from Kubernetes"
 
 	cmd.Flags().StringVarP(&params.container, "container", "c", params.container, "Container name when multiple containers in pod")
 	cmd.Flags().StringVarP(&params.namespace, "namespace", "n", params.namespace, "Kubernetes namespace to use. Default to namespace configured in Kubernetes context")
